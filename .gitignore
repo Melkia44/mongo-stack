@@ -1,10 +1,17 @@
-# ==========================
-# Fichiers à ne pas suivre
-# ==========================
+# Environnements virtuels
+.venv/
+venv/
+MLO_P5_Sources/src/.venv/
+
+# Fichiers d'environnement
 .env
 MLO_P5_Sources/src/.env
+
+# Python
 __pycache__/
 *.pyc
+
+# Divers
 *.log
 *.bak
 .DS_Store
