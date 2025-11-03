@@ -1,0 +1,10 @@
+# ==========================
+# Fichiers à ne pas suivre
+# ==========================
+.env
+MLO_P5_Sources/src/.env
+__pycache__/
+*.pyc
+*.log
+*.bak
+.DS_Store
