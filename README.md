@@ -185,4 +185,10 @@ git push origin feature/readme
 - Volume Docker : stockage persistant géré par Docker.
 - Bind mount : liaison d’un dossier du host vers le conteneur.
 - Healthcheck : check automatisé d’état d’un service/container.
+- 
+---
+
+© 2025 - Mathieu Lowagie  
+Projet 5 – Master Data Engineering (OpenClassrooms)
+
 
