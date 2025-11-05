@@ -28,6 +28,8 @@ services:
       interval: 20s
       timeout: 5s
       retries: 5
+    networks:
+      - mongo-network
 
   mongo-express:
     image: mongo-express:1.0.2
@@ -39,9 +41,12 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
     environment:
+      # connexion à Mongo via le nom de service "mongo" sur le réseau Docker
       ME_CONFIG_MONGODB_URL: "mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PWD}@mongo:27017/?authSource=admin"
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_ADMIN_PWD}
+    networks:
+      - mongo-network
 
   # service de sauvegarde "one shot" :
   # lancé à la demande avec : docker compose run --rm backup
@@ -64,7 +69,13 @@ services:
         --password="$${MONGO_ROOT_PWD}"
         --authenticationDatabase=admin
         --out="/backups/$$(date +%F_%H-%M-%S)"
+    networks:
+      - mongo-network
 
 volumes:
   mongo_data:
   mongo_backups:
+
+networks:
+  mongo-network:
+    driver: bridge
