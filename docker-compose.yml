@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   mongo:
     image: mongo:7
@@ -6,11 +8,21 @@ services:
     ports:
       - "127.0.0.1:27017:27017"
     environment:
+      # compte admin Mongo (définis dans .env)
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PWD}
+
+      # base & utilisateur applicatifs (utilisés par 001-init.js)
+      APP_DB: ${APP_DB}
+      APP_USER: ${APP_USER}
+      APP_PWD: ${APP_PWD}
     volumes:
+      # données persistantes Mongo
       - mongo_data:/data/db
+      # scripts d'initialisation
       - ./initdb.d:/docker-entrypoint-initdb.d:ro
+      # CSV sources (bind mount, lecture seule)
+      - ./MLO_P5_Sources/data/csv:/data/csv:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\" | grep 1"]
       interval: 20s
@@ -31,39 +43,27 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_ADMIN_PWD}
 
+  # service de sauvegarde "one shot" :
+  # lancé à la demande avec : docker compose run --rm backup
   backup:
     image: mongo:7
     container_name: mongo_backup
-    restart: unless-stopped
     depends_on:
       mongo:
         condition: service_healthy
     environment:
       MONGO_ROOT_USER: ${MONGO_ROOT_USER}
       MONGO_ROOT_PWD: ${MONGO_ROOT_PWD}
-      RETENTION: "7"                 
     volumes:
       - mongo_backups:/backups
     entrypoint: ["/bin/bash","-lc"]
-    
     command: >
-      set -euo pipefail;
-      while true; do
-        TS=$$(date +%F_%H-%M-%S);
-        echo "[backup] start $$TS";
-        mongodump
-          --host=mongo
-          --username="$${MONGO_ROOT_USER}"
-          --password="$${MONGO_ROOT_PWD}"
-          --authenticationDatabase=admin
-          --out="/backups/$$TS";
-        echo "[backup] done  $$TS";
-        # garder les RETENTION derniers dumps
-        find /backups -maxdepth 1 -mindepth 1 -type d -printf '%T@ %p\n' \
-          | sort -nr | tail -n +$$(( $${RETENTION:-7} + 1 )) | cut -d' ' -f2- \
-          | xargs -r rm -rf;
-        sleep 86400;
-      done
+      mongodump
+        --host=mongo
+        --username="$${MONGO_ROOT_USER}"
+        --password="$${MONGO_ROOT_PWD}"
+        --authenticationDatabase=admin
+        --out="/backups/$$(date +%F_%H-%M-%S)"
 
 volumes:
   mongo_data:
