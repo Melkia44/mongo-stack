@@ -1,32 +1,29 @@
-# Projet 5 – Migration et conteneurisation MongoDB
+🧱 Projet 5 – Migration et conteneurisation MongoDB
 
-Ce projet conteneurise une base MongoDB avec Docker et Docker Compose.  
-L’environnement fournit :
-- une base MongoDB persistante ;
-- une interface Mongo Express pour l'exploration des données ;
-- un service de sauvegarde automatisé ;
-- des volumes séparés pour la base et pour les fichiers sources CSV.
+Ce projet conteneurise une base de données MongoDB et l’automatise avec Docker Compose.
+L’environnement fournit un pipeline complet d’ingestion et de gestion des données, incluant :
 
----
+- une base MongoDB persistante, initialisée automatiquement ;
+- une interface Mongo Express pour l’exploration des données ;
+- un service de sauvegarde “one shot” (dump) ;
+- un service d’ingestion conteneurisé (chargement automatique du CSV via Python) ;
+des volumes séparés pour les données, les backups et les fichiers sources CSV.
 
-## Prérequis
+⚙️ Prérequis
 
-- Ubuntu 22.04 ou supérieur (ou machine avec Docker installé)  
-- Docker  
-- Docker Compose (plugin)  
+Ubuntu 22.04 ou supérieur (ou toute machine avec Docker installé)
 
-Installation rapide (Ubuntu) :
-```bash
+Docker
+
+Docker Compose (plugin intégré ou installé via apt)
+
+Installation rapide (Ubuntu)
 sudo apt update
 sudo apt install -y docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
-# se déconnecter / reconnecter pour prendre en compte le groupe docker
-```
+# puis se déconnecter / reconnecter
 
----
-
-## Arborescence recommandée du dépôt
-```text
+📁 Arborescence du dépôt
 mongo-stack/
 ├── docker-compose.yml
 ├── .env.example
@@ -34,161 +31,188 @@ mongo-stack/
 ├── initdb.d/
 │   └── 001-init.js
 ├── MLO_P5_Sources/
-│   └── data/csv/
-├── backups/            # (volume ou bind mount côté host)
+│   ├── src/
+│   │   ├── config.py
+│   │   ├── ingest.py
+│   │   ├── transform.py
+│   │   └── Dockerfile
+│   └── Data/CSV/
+│       └── healthcare_dataset.csv
+├── backups/
 └── README.md
-```
 
----
-
-## Déploiement (local)
-
-1. Copier le modèle `.env.example` en `.env` et remplir les variables (ne pas committer `.env`) :
-```bash
+🚀 Déploiement (local)
+1. Copier et configurer le fichier d’environnement
 cp .env.example .env
-# éditer .env : nano .env
-```
+nano .env
 
-2. Lancer la stack :
-```bash
+
+⚠️ Ne jamais committer .env — il contient vos mots de passe.
+
+2. Lancer la stack complète
 docker compose up -d
-```
 
-3. Vérifier les conteneurs en cours :
-```bash
+3. Vérifier les conteneurs actifs
 docker ps
-```
+
 
 Services attendus :
-- `mongo` (MongoDB)
-- `mongo_express` (interface web)
-- `mongo_backup` (service de sauvegarde)
 
-Arrêter la stack :
-```bash
-docker compose down
-```
+mongo : base de données MongoDB
 
-Voir les logs :
-```bash
-docker compose logs -f mongo
-```
+mongo_express : interface d’administration web
 
-Accéder au shell du conteneur Mongo :
-```bash
-docker exec -it mongo bash
-# ou pour mongosh
-docker exec -it mongo mongosh -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" --authenticationDatabase admin
-```
+mongo_backup : conteneur de sauvegarde ponctuelle
 
----
+ingest : conteneur Python pour l’ingestion CSV
 
-## Volumes et persistance
+4. Exécuter manuellement le pipeline d’ingestion
 
-Exemples de volumes configurés dans `docker-compose.yml` :
-- `mongo_data` : données persistantes MongoDB (`/data/db`)
-- `mongo_backups` : emplacement des dumps de sauvegarde (ou bind mount)
-- `./MLO_P5_Sources/data/csv` : données sources CSV montées en lecture seule dans le conteneur (bind mount)
+Si vous souhaitez relancer uniquement l’ingestion (exécution du script Python) :
 
-Objectif : garantir la persistance des données même si les conteneurs sont supprimés.
+docker compose run --rm ingest
 
----
 
-## Vérification du bon fonctionnement
+L’ingest charge le CSV healthcare_dataset.csv dans la base healthcare et crée les index.
 
-Test CLI (ping) :
-```bash
+🧩 Volumes et persistance
+
+Volumes définis dans docker-compose.yml :
+
+Volume	Conteneur	Rôle
+mongo_data	/data/db	Données persistantes Mongo
+mongo_backups	/backups	Sauvegardes (mongodump)
+./MLO_P5_Sources/Data/CSV	/data/csv	Données sources CSV montées en lecture seule
+
+👉 L’objectif est de préserver les données même après suppression des conteneurs.
+
+🧠 Vérification du bon fonctionnement
+Test CLI (ping)
 docker exec -it mongo mongosh -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 })'
-```
+
+
 Résultat attendu :
-```json
+
 { "ok" : 1 }
-```
 
-Accès à Mongo Express :
-- URL : `http://127.0.0.1:8081`
-- Auth : utilisateur `admin` et mot de passe défini dans `.env` (ME_ADMIN_PWD)
+Accès à Mongo Express
 
----
+URL : http://127.0.0.1:8081
 
-## Scripts d'initialisation
+Authentification : utilisateur admin / mot de passe ${ME_ADMIN_PWD}
 
-Le dossier `initdb.d/` contient `001-init.js` (exécution automatique à la création du conteneur) qui peut :
-- créer la base applicative (`APP_DB`)
-- créer l’utilisateur applicatif (`APP_USER`) et lui donner les droits `readWrite`
-- créer des index initiaux
+🧮 Scripts d’initialisation
 
-Les noms (`APP_DB`, `APP_USER`, etc.) sont fournis via `.env`.
+Le dossier initdb.d/ contient 001-init.js :
 
----
+crée la base applicative (APP_DB) ;
 
-## Sécurité des secrets (recommandations)
+crée les utilisateurs app_user, app_read, app_admin ;
 
-- **Ne committer jamais** `.env` contenant des mots de passe. Ajoutez `.env` à `.gitignore`.
-- Conserver un fichier `.env.example` avec des placeholders (exemple ci-dessous) pour documenter les variables d’environnement.
-- Pour générer un mot de passe fort :
-  ```bash
-  # exemple simple
-  openssl rand -base64 20
-  ```
-- Pour un usage plus sécurisé en production, privilégier :
-  - Docker Secrets / Docker Swarm / Kubernetes Secrets
-  - ou un gestionnaire de secrets (Vault, AWS Secrets Manager, etc.)
+attribue les rôles nécessaires (readWrite, read, dbAdmin) ;
 
----
+exécute automatiquement au premier démarrage du conteneur mongo.
 
-## Exemple de `.env.example` (à renommer en `.env` côté local)
-```env
-# accès admin Mongo (non commit)
+🐍 Service d’ingestion conteneurisé
+
+Le service ingest est défini dans docker-compose.yml :
+
+Construit à partir du Dockerfile Python ;
+
+Installe les dépendances depuis requirements.txt ;
+
+Monte le CSV depuis MLO_P5_Sources/Data/CSV ;
+
+Exécute automatiquement le script src/ingest.py.
+
+Le script ingest.py :
+
+lit le CSV (pandas) ;
+
+applique un contrôle qualité ;
+
+transforme les données (transform.py) ;
+
+insère les documents dans la collection patients ;
+
+crée les index (Hospital, Doctor, Medical Condition, etc.) ;
+
+évite la réinjection si la collection est déjà peuplée.
+
+🛡️ Sécurité et bonnes pratiques
+
+Ne jamais committer le fichier .env (ajouté à .gitignore)
+
+Utiliser .env.example pour documenter les variables
+
+Pour générer un mot de passe fort :
+
+openssl rand -base64 20
+
+
+En production, préférer :
+
+Docker Secrets
+
+Kubernetes Secrets
+
+Vault / AWS Secrets Manager
+
+🧾 Exemple de .env.example
+# Accès administrateur Mongo
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PWD=REPLACE_WITH_STRONG_PASSWORD
 
-# accès Mongo Express (basic auth)
+# Accès Mongo Express
 ME_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 
-# base applicative et utilisateur (créés par initdb.d/001-init.js)
-APP_DB=ma_base_app
+# Utilisateurs applicatifs
+APP_DB=healthcare
 APP_USER=app_user
 APP_PWD=REPLACE_WITH_STRONG_PASSWORD
-```
+APP_READ_USER=app_read
+APP_READ_PWD=REPLACE_WITH_STRONG_PASSWORD
+APP_ADMIN_USER=app_admin
+APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 
-Remarque : remplacer `REPLACE_WITH_STRONG_PASSWORD` par un mot de passe réel **localement**.
+🔄 Commandes utiles
+Commande	Description
+docker compose up -d	Démarrer la stack
+docker compose down	Stopper la stack
+docker compose logs -f mongo	Suivre les logs Mongo
+docker exec -it mongo mongosh	Shell interactif Mongo
+docker compose run --rm ingest	Exécuter le script d’ingestion
+docker compose run --rm backup	Sauvegarde immédiate (mongodump)
+🧰 Bonnes pratiques Git
 
----
+Toujours garder .env dans .gitignore
 
-## Bonnes pratiques Git pour ce projet
+Travailler sur une branche dédiée (feature/docker-stack)
 
-- Garder `.env` dans `.gitignore`.
-- Travailler sur une branche dédiée pour les développements majeurs :
-```bash
-git checkout -b feature/readme
-git add README.md
-git commit -m "Add README and documentation"
-git push origin feature/readme
-# puis ouvrir une Pull Request sur GitHub pour merger dans main
-```
+Committer fréquemment avec des messages explicites :
 
----
+git add .
+git commit -m "feat: conteneurisation de l’ingestion CSV"
+git push origin feature/docker-stack
 
-## Points d'amélioration possibles (hors périmètre minimal)
-- Utiliser Docker secrets pour la gestion des mots de passe en environnement non-local.
-- Mettre en place une rotation et une rétention des backups plus fine.
-- Ajouter des tests d'intégration (script qui injecte un CSV et vérifie l'import).
-- Documenter les commandes d’ingestion CSV (scripts Python / mongoimport).
+💡 Points d’amélioration futurs
 
----
+Externaliser les secrets avec Docker Secrets
 
-## Annexes / Glossaire (court)
+Ajouter un conteneur de monitoring (Prometheus + Grafana)
 
-- Conteneur : instance isolée d’une image (runtime léger).
-- Image : template immuable utilisé pour créer un conteneur.
-- Volume Docker : stockage persistant géré par Docker.
-- Bind mount : liaison d’un dossier du host vers le conteneur.
-- Healthcheck : check automatisé d’état d’un service/container.
-- 
----
+Planifier automatiquement les backups (cron ou conteneur scheduler)
 
-© 2025 - Mathieu Lowagie  
+Ajouter un test automatique de l’ingest dans la CI
+
+📚 Glossaire
+Terme	Définition
+Conteneur	Instance isolée d’une image Docker
+Image	Template immuable pour créer un conteneur
+Volume Docker	Stockage persistant géré par Docker
+Bind mount	Liaison d’un dossier local vers un conteneur
+Healthcheck	Vérification automatisée de l’état d’un service
+Rebase	Technique Git pour linéariser l’historique des commits
+
+© 2025 – Mathieu Lowagie
 Projet 5 – Master Data Engineering (OpenClassrooms)
-
-
