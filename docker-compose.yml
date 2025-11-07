@@ -6,10 +6,8 @@ services:
     ports:
       - "127.0.0.1:27017:27017"
     environment:
-      # compte admin Mongo (définis dans .env)
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PWD}
-
       # base & utilisateurs applicatifs (utilisés par 001-init.js)
       APP_DB: ${APP_DB}
       APP_USER: ${APP_USER}
@@ -18,16 +16,12 @@ services:
       APP_READ_PWD: ${APP_READ_PWD}
       APP_ADMIN_USER: ${APP_ADMIN_USER}
       APP_ADMIN_PWD: ${APP_ADMIN_PWD}
-
     volumes:
-      # données persistantes Mongo
       - mongo_data:/data/db
-      # scripts d'initialisation
       - ./initdb.d:/docker-entrypoint-initdb.d:ro
-      # CSV sources (bind mount, lecture seule)
-      - ./MLO_P5_Sources/data/csv:/data/csv:ro
+      - ./MLO_P5_Sources/Data/CSV:/data/csv:ro
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\" | grep 1"]
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -44,15 +38,12 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
     environment:
-      # connexion à Mongo via le nom de service "mongo" sur le réseau Docker
       ME_CONFIG_MONGODB_URL: "mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PWD}@mongo:27017/?authSource=admin"
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_ADMIN_PWD}
     networks:
       - mongo-network
 
-  # service de sauvegarde "one shot" :
-  # lancé à la demande avec : docker compose run --rm backup
   backup:
     image: mongo:7
     container_name: mongo_backup
@@ -64,7 +55,7 @@ services:
       MONGO_ROOT_PWD: ${MONGO_ROOT_PWD}
     volumes:
       - mongo_backups:/backups
-    entrypoint: ["/bin/bash","-lc"]
+    entrypoint: ["/bin/bash", "-lc"]
     command: >
       mongodump
         --host=mongo
@@ -75,6 +66,20 @@ services:
     networks:
       - mongo-network
 
+  ingest:
+    build:
+      context: ./MLO_P5_Sources
+      dockerfile: ./src/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./MLO_P5_Sources/Data/CSV:/data/csv:ro
+    networks:
+      - mongo-network
+
 volumes:
   mongo_data:
   mongo_backups:
@@ -82,3 +87,4 @@ volumes:
 networks:
   mongo-network:
     driver: bridge
+
