@@ -213,6 +213,3 @@ Rebase Git	Technique de linéarisation de l’historique des commits
 14. Crédits
 © 2025 – Mathieu Lowagie
 Projet 5 – Master Data Engineering (OpenClassrooms)
-
-yaml
-Copier le code
