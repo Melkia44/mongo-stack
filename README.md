@@ -31,7 +31,7 @@ sudo usermod -aG docker $USER
 
 
 ### 3. Arborescence du dépôt
-text
+``` text
 Copier le code
 mongo-stack/
 ├── docker-compose.yml
@@ -49,6 +49,8 @@ mongo-stack/
 │       └── healthcare_dataset.csv
 ├── backups/
 └── README.md
+
+```
 4. Déploiement local
 4.1 Configuration de l’environnement
 Créer un fichier .env à partir du modèle :
