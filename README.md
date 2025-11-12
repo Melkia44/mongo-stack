@@ -27,7 +27,10 @@ sudo apt update
 sudo apt install -y docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
 # Se déconnecter / reconnecter pour appliquer les droits
-3. Arborescence du dépôt
+
+
+
+### 3. Arborescence du dépôt
 text
 Copier le code
 mongo-stack/
