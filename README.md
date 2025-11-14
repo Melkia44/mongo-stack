@@ -1,5 +1,5 @@
-Projet 5 – Migration et conteneurisation MongoDB
-1. Objectif du projet
+### Projet 5 – Migration et conteneurisation MongoDB
+### 1. Objectif du projet
 
 Ce projet vise à conteneuriser une base de données MongoDB et à automatiser son exploitation grâce à Docker et Docker Compose.
 L’environnement permet de :
@@ -12,7 +12,7 @@ L’environnement permet de :
 - Définir un système d’authentification complet avec rôles dédiés.
 - Documenter le schéma complet de la base de données.
 
-2. Prérequis techniques
+### 2. Prérequis techniques
 
 Système : Ubuntu 22.04+
 
@@ -20,14 +20,14 @@ Logiciels requis :
 Docker
 Docker Compose
 
-2.1 Installation rapide (Ubuntu)
+### 2.1 Installation rapide (Ubuntu)
 sudo apt update
 sudo apt install -y docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
 
 Se déconnecter / reconnecter pour appliquer les droits.
 
-3. Arborescence du dépôt
+### 3. Arborescence du dépôt
 mongo-stack/
 ├── docker-compose.yml
 ├── .env.example
@@ -45,8 +45,8 @@ mongo-stack/
 ├── backups/
 └── README.md
 
-4. Déploiement local
-4.1 Configuration de l’environnement
+###4. Déploiement local
+###4.1 Configuration de l’environnement
 
 Créer le fichier .env :
 
@@ -55,10 +55,10 @@ nano .env
 
 !!! Ne jamais committer .env !!!
 
-4.2 Lancement de la stack
+###4.2 Lancement de la stack
 docker compose up -d
 
-4.3 Vérification des conteneurs
+###4.3 Vérification des conteneurs
 docker ps
 
 Services attendus :
@@ -67,10 +67,10 @@ Mongo_express
 mongo_backup
 ingest
 
-4.4 Lancer manuellement l’ingestion
+###4.4 Lancer manuellement l’ingestion
 docker compose run --rm ingest
 
-5. Volumes et persistance
+###5. Volumes et persistance
 Volume	Monté dans	Description
 mongo_data	/data/db	Données persistantes MongoDB
 mongo_backups	/backups	Sauvegardes mongodump
@@ -78,12 +78,12 @@ mongo_backups	/backups	Sauvegardes mongodump
 
 Objectif : persistance garantie + séparation stricte des responsabilités.
 
-6. Schéma de la base de données
+###6. Schéma de la base de données
 
 Le dataset décrit des séjours médicaux.
 La structure retenue est optimisée pour MongoDB.
 
-6.1 Modèle conceptuel (référence)
+###6.1 Modèle conceptuel (référence)
 PATIENT
 
 id_patient
@@ -113,7 +113,7 @@ montant_facture
 Relation :
 1 patient → N séjours
 
-6.2 Modélisation MongoDB implémentée
+###6.2 Modélisation MongoDB implémentée
 
 La collection patients inclut un tableau admissions :
 
@@ -147,11 +147,11 @@ Modèle adapté au JSON et à MongoDB
 Ingestion simplifiée
 Structure scalable pour des millions de documents
 
-7. Système d’authentification et rôles utilisateurs
+### 7. Système d’authentification et rôles utilisateurs
 
 L’authentification est gérée par MongoDB via le script initdb.d/001-init.js.
 
-7.1 Utilisateurs créés automatiquement
+### 7.1 Utilisateurs créés automatiquement
 1. Administrateur global
 
 User : ${MONGO_ROOT_USER}
@@ -170,7 +170,7 @@ Rôle : read uniquement
 User : ${APP_ADMIN_USER}
 Rôle : dbAdmin (statistiques, gestion index)
 
-7.2 Script d’initialisation (001-init.js)
+### 7.2 Script d’initialisation (001-init.js)
 db.createUser({
   user: process.env.APP_USER,
   pwd: process.env.APP_PWD,
@@ -195,7 +195,7 @@ Séparation stricte des privilèges
 Protection des données médicales sensibles
 Conformité RGPD et bonnes pratiques DevOps
 
-8. Service d’ingestion Python conteneurisé
+### 8. Service d’ingestion Python conteneurisé
 
 Fonctionnement :
 Lecture du CSV avec Pandas
@@ -206,14 +206,14 @@ Création des index
 
 Prévention de double-ingestion
 
-9. Sécurité
+###9. Sécurité
 .env jamais committé
 .env.example obligatoire en version publique
 
 Génération mot de passe fort :
 openssl rand -base64 20
 
-10. Exemple de .env.example
+###10. Exemple de .env.example
 # Accès administrateur Mongo
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PWD=REPLACE_WITH_STRONG_PASSWORD
@@ -230,7 +230,7 @@ APP_READ_PWD=REPLACE_WITH_STRONG_PASSWORD
 APP_ADMIN_USER=app_admin
 APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 
-11. Commandes utiles
+###11. Commandes utiles
 docker compose up -d
 docker compose down
 docker compose logs -f mongo
@@ -238,7 +238,7 @@ docker exec -it mongo mongosh
 docker compose run --rm ingest
 docker compose run --rm backup
 
-12. Bonnes pratiques Git
+###12. Bonnes pratiques Git
 git add .
 git commit -m "feat: conteneurisation ingestion CSV"
 git push origin feature/docker-stack
@@ -248,14 +248,15 @@ Branches dédiées
 
 Pull Requests avant fusion dans main
 
-13. Glossaire
+###13. Glossaire
 Terme	Définition
 Conteneur	Instance isolée
 Volume Docker	Stockage persistant
 Bind mount	Lien vers un dossier local
 Healthcheck	Vérification automatique
 Rebase Git	Réécriture linéaire de l’historique
-14. Crédits
+
+###14. Crédits
 
 © 2025 – Mathieu Lowagie
 Projet 5 – Master Data Engineering (OpenClassrooms)
