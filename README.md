@@ -48,6 +48,7 @@ Se déconnecter / reconnecter pour appliquer les droits.
 ├── backups/
 └── README.md
 ```
+
 ### 4. Déploiement local
 ### 4.1 Configuration de l’environnement
 
@@ -218,7 +219,7 @@ Création des index
 
 Prévention de double-ingestion
 
-###9. Sécurité
+### 9. Sécurité
 .env jamais committé
 .env.example obligatoire en version publique
 
@@ -243,7 +244,7 @@ APP_READ_PWD=REPLACE_WITH_STRONG_PASSWORD
 APP_ADMIN_USER=app_admin
 APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 ```
-###11. Commandes utiles
+### 11. Commandes utiles
 ```
 docker compose up -d
 docker compose down
