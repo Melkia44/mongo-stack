@@ -48,8 +48,8 @@ Se déconnecter / reconnecter pour appliquer les droits.
 ├── backups/
 └── README.md
 ```
-###4. Déploiement local
-###4.1 Configuration de l’environnement
+### 4. Déploiement local
+### 4.1 Configuration de l’environnement
 
 Créer le fichier .env :
 
@@ -58,7 +58,7 @@ nano .env
 
 !!! Ne jamais committer .env !!!
 
-###4.2 Lancement de la stack
+### 4.2 Lancement de la stack
 docker compose up -d
 
 ###4.3 Vérification des conteneurs
@@ -73,7 +73,7 @@ ingest
 ###4.4 Lancer manuellement l’ingestion
 docker compose run --rm ingest
 
-###5. Volumes et persistance
+### 5. Volumes et persistance
 Volume	Monté dans	Description
 mongo_data	/data/db	Données persistantes MongoDB
 mongo_backups	/backups	Sauvegardes mongodump
@@ -81,12 +81,12 @@ mongo_backups	/backups	Sauvegardes mongodump
 
 Objectif : persistance garantie + séparation stricte des responsabilités.
 
-###6. Schéma de la base de données
+### 6. Schéma de la base de données
 
 Le dataset décrit des séjours médicaux.
 La structure retenue est optimisée pour MongoDB.
 
-###6.1 Modèle conceptuel (référence)
+### 6.1 Modèle conceptuel (référence)
 
 ```PATIENT
 
@@ -118,7 +118,7 @@ Relation :
 1 patient → N séjours
 ```
 
-###6.2 Modélisation MongoDB implémentée
+### 6.2 Modélisation MongoDB implémentée
 
 La collection patients inclut un tableau admissions :
 
