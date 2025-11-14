@@ -1,38 +1,33 @@
-# Projet 5 – Migration et conteneurisation MongoDB
+Projet 5 – Migration et conteneurisation MongoDB
+1. Objectif du projet
 
-## 1. Objectif du projet
+Ce projet vise à conteneuriser une base de données MongoDB et à automatiser son exploitation grâce à Docker et Docker Compose.
+L’environnement permet de :
 
-Ce projet vise à conteneuriser une base de données **MongoDB** et à automatiser son exploitation grâce à **Docker** et **Docker Compose**.
+- Héberger une base MongoDB persistante.
+- Fournir une interface Mongo Express pour l’administration.
+- Intégrer un service de sauvegarde automatisée.
+- Ajouter un service d’ingestion conteneurisé (script Python).
+- Gérer des volumes distincts pour la base, les backups et les données sources.
+- Définir un système d’authentification complet avec rôles dédiés.
+- Documenter le schéma complet de la base de données.
 
-L’environnement mis en place permet de :
-- Héberger une base MongoDB persistante.  
-- Fournir une interface **Mongo Express** pour la visualisation et l’administration.  
-- Intégrer un service de **sauvegarde automatisé**.  
-- Ajouter un service d’**ingestion conteneurisé** (chargement du CSV via un script Python).  
-- Gérer des **volumes distincts** pour la base, les backups et les données sources.
+2. Prérequis techniques
 
----
+Système : Ubuntu 22.04+
 
-## 2. Prérequis techniques
+Logiciels requis :
+Docker
+Docker Compose
 
-**Système :** Ubuntu 22.04 ou supérieur (ou toute machine avec Docker installé)  
-**Logiciels requis :**  
-- Docker  
-- Docker Compose (plugin intégré)
-
-### 2.1 Installation rapide (Ubuntu)
-
-```bash
+2.1 Installation rapide (Ubuntu)
 sudo apt update
 sudo apt install -y docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
-# Se déconnecter / reconnecter pour appliquer les droits
-```
 
+Se déconnecter / reconnecter pour appliquer les droits.
 
-### 3. Arborescence du dépôt
-``` text
-Copier le code
+3. Arborescence du dépôt
 mongo-stack/
 ├── docker-compose.yml
 ├── .env.example
@@ -50,124 +45,175 @@ mongo-stack/
 ├── backups/
 └── README.md
 
-```
 4. Déploiement local
 4.1 Configuration de l’environnement
-Créer un fichier .env à partir du modèle :
 
-bash
-Copier le code
+Créer le fichier .env :
+
 cp .env.example .env
 nano .env
-⚠️ Ne jamais committer le fichier .env.
+
+!!! Ne jamais committer .env !!!
 
 4.2 Lancement de la stack
-bash
-Copier le code
 docker compose up -d
+
 4.3 Vérification des conteneurs
-bash
-Copier le code
 docker ps
+
 Services attendus :
+mongo
+Mongo_express
+mongo_backup
+ingest
 
-mongo : base de données principale
-
-mongo_express : interface web d’administration
-
-mongo_backup : service de sauvegarde ponctuelle
-
-ingest : service d’ingestion Python
-
-4.4 Lancer manuellement le pipeline d’ingestion
-bash
-Copier le code
+4.4 Lancer manuellement l’ingestion
 docker compose run --rm ingest
-Ce service charge le CSV healthcare_dataset.csv dans la base healthcare et crée les index nécessaires.
 
 5. Volumes et persistance
-Volume	Conteneur	Description
+Volume	Monté dans	Description
 mongo_data	/data/db	Données persistantes MongoDB
-mongo_backups	/backups	Sauvegardes (mongodump)
-./MLO_P5_Sources/Data/CSV	/data/csv	Données sources CSV (lecture seule)
+mongo_backups	/backups	Sauvegardes mongodump
+./MLO_P5_Sources/Data/CSV	/data/csv	Données sources CSV
 
-🎯 Objectif : garantir la persistance des données même après suppression des conteneurs.
+Objectif : persistance garantie + séparation stricte des responsabilités.
 
-6. Vérification du bon fonctionnement
-6.1 Test via ligne de commande
-bash
-Copier le code
-docker exec -it mongo mongosh -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 })'
-Résultat attendu :
+6. Schéma de la base de données
 
-json
-Copier le code
-{ "ok" : 1 }
-6.2 Accès à Mongo Express
-URL : http://127.0.0.1:8081
+Le dataset décrit des séjours médicaux.
+La structure retenue est optimisée pour MongoDB.
 
-Authentification :
+6.1 Modèle conceptuel (référence)
+PATIENT
 
-Utilisateur : admin
+id_patient
+nom
+age
+genre
+groupe_sanguin
 
-Mot de passe : valeur de ME_ADMIN_PWD dans .env
+SEJOUR
 
-7. Scripts d’initialisation
-Le dossier initdb.d/ contient le fichier 001-init.js, exécuté automatiquement au premier démarrage du conteneur mongo.
-Il permet de :
+id_sejour
+id_patient
+date_admission
+date_sortie
+type_admission
+hopital
+medecin
+assureur
+pathologie
+medicament
 
-Créer la base applicative (APP_DB).
+resultats_tests
 
-Créer les utilisateurs app_user, app_read, app_admin.
+numero_chambre
+montant_facture
 
-Attribuer les rôles appropriés (readWrite, read, dbAdmin).
+Relation :
+1 patient → N séjours
 
-Créer les index de base.
+6.2 Modélisation MongoDB implémentée
+
+La collection patients inclut un tableau admissions :
+
+{
+  "name": "Jane Doe",
+  "age": 42,
+  "gender": "Female",
+  "blood_type": "A+",
+  "admissions": [
+    {
+      "admission_id": "ObjectId(...)",
+      "date_admission": "2024-01-31",
+      "date_discharge": "2024-02-02",
+      "admission_type": "Emergency",
+      "hospital": "General Hospital",
+      "doctor": "Dr Smith",
+      "insurance_provider": "HealthCare Inc",
+      "medical_condition": "Fracture",
+      "medication": "Paracetamol",
+      "test_results": "Normal",
+      "room_number": 102,
+      "billing_amount": 1450.90
+    }
+  ]
+}
+
+Avantages
+
+Lecture complète d’un dossier patient en une requête
+Modèle adapté au JSON et à MongoDB
+Ingestion simplifiée
+Structure scalable pour des millions de documents
+
+7. Système d’authentification et rôles utilisateurs
+
+L’authentification est gérée par MongoDB via le script initdb.d/001-init.js.
+
+7.1 Utilisateurs créés automatiquement
+1. Administrateur global
+
+User : ${MONGO_ROOT_USER}
+Rôle : root
+Usage : administration complète
+
+2. Utilisateur applicatif (lecture/écriture)
+User : ${APP_USER}
+Rôle : readWrite sur ${APP_DB}
+
+3. Utilisateur lecture seule
+User : ${APP_READ_USER}
+Rôle : read uniquement
+
+4. Administrateur applicatif
+User : ${APP_ADMIN_USER}
+Rôle : dbAdmin (statistiques, gestion index)
+
+7.2 Script d’initialisation (001-init.js)
+db.createUser({
+  user: process.env.APP_USER,
+  pwd: process.env.APP_PWD,
+  roles: [{ role: "readWrite", db: process.env.APP_DB }]
+});
+
+db.createUser({
+  user: process.env.APP_READ_USER,
+  pwd: process.env.APP_READ_PWD,
+  roles: [{ role: "read", db: process.env.APP_DB }]
+});
+
+db.createUser({
+  user: process.env.APP_ADMIN_USER,
+  pwd: process.env.APP_ADMIN_PWD,
+  roles: [{ role: "dbAdmin", db: process.env.APP_DB }]
+});
+
+Principes appliqués
+
+Séparation stricte des privilèges
+Protection des données médicales sensibles
+Conformité RGPD et bonnes pratiques DevOps
 
 8. Service d’ingestion Python conteneurisé
-Le service ingest défini dans docker-compose.yml :
 
-Construit une image à partir du Dockerfile Python.
+Fonctionnement :
+Lecture du CSV avec Pandas
+Validation (quality())
+Transformations (transform.py)
+Insertion dans MongoDB
+Création des index
 
-Installe les dépendances via requirements.txt.
+Prévention de double-ingestion
 
-Monte le répertoire CSV dans le conteneur.
+9. Sécurité
+.env jamais committé
+.env.example obligatoire en version publique
 
-Exécute automatiquement le script src/ingest.py.
-
-Le script ingest.py :
-
-Charge le CSV via Pandas.
-
-Vérifie la qualité des données (quality()).
-
-Applique les transformations définies dans transform.py.
-
-Convertit et insère les documents dans la collection MongoDB patients.
-
-Crée les index (ex. Hospital, Doctor, Medical Condition).
-
-Évite la réinjection si la collection est déjà peuplée.
-
-9. Sécurité et bonnes pratiques
-Ne jamais committer le fichier .env.
-
-Ajouter .env dans .gitignore.
-
-Conserver un .env.example avec des placeholders pour la documentation.
-
-Pour générer un mot de passe fort :
-
-bash
-Copier le code
+Génération mot de passe fort :
 openssl rand -base64 20
-Pour un environnement de production :
 
-Utiliser Docker Secrets, Vault ou AWS Secrets Manager.
-
-10. Exemple de fichier .env.example
-bash
-Copier le code
+10. Exemple de .env.example
 # Accès administrateur Mongo
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PWD=REPLACE_WITH_STRONG_PASSWORD
@@ -183,35 +229,33 @@ APP_READ_USER=app_read
 APP_READ_PWD=REPLACE_WITH_STRONG_PASSWORD
 APP_ADMIN_USER=app_admin
 APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
+
 11. Commandes utiles
-Commande	Description
-docker compose up -d	Démarrer la stack
-docker compose down	Arrêter la stack
-docker compose logs -f mongo	Suivre les logs MongoDB
-docker exec -it mongo mongosh	Ouvrir un shell Mongo
-docker compose run --rm ingest	Lancer le script d’ingestion
-docker compose run --rm backup	Effectuer une sauvegarde (mongodump)
+docker compose up -d
+docker compose down
+docker compose logs -f mongo
+docker exec -it mongo mongosh
+docker compose run --rm ingest
+docker compose run --rm backup
 
 12. Bonnes pratiques Git
-Travailler sur des branches dédiées (feature/docker-stack).
-
-Valider régulièrement avec des messages clairs :
-
-bash
-Copier le code
 git add .
-git commit -m "feat: conteneurisation de l’ingestion CSV"
+git commit -m "feat: conteneurisation ingestion CSV"
 git push origin feature/docker-stack
-Utiliser des Pull Requests pour fusionner dans main.
+
+
+Branches dédiées
+
+Pull Requests avant fusion dans main
 
 13. Glossaire
 Terme	Définition
-Conteneur	Instance isolée d’une image Docker
-Volume Docker	Stockage persistant géré par Docker
-Bind mount	Liaison d’un dossier local vers un conteneur
-Healthcheck	Vérification automatisée de l’état d’un service
-Rebase Git	Technique de linéarisation de l’historique des commits
-
+Conteneur	Instance isolée
+Volume Docker	Stockage persistant
+Bind mount	Lien vers un dossier local
+Healthcheck	Vérification automatique
+Rebase Git	Réécriture linéaire de l’historique
 14. Crédits
+
 © 2025 – Mathieu Lowagie
 Projet 5 – Master Data Engineering (OpenClassrooms)
