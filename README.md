@@ -89,36 +89,35 @@ La structure retenue est optimisée pour MongoDB.
 
 ### 6.1 Modèle conceptuel (référence)
 
+Le dataset décrit des séjours médicaux. Le modèle conceptuel ci-dessous sert uniquement de **référence logique** (vision relationnelle classique).
+
+#### PATIENT
 ```
-PATIENT
 
-id_patient
-nom
-age
-genre
-groupe_sanguin
-
-SEJOUR
-
-id_sejour
-id_patient
-date_admission
-date_sortie
-type_admission
-hopital
-medecin
-assureur
-pathologie
-medicament
-
-resultats_tests
-
-numero_chambre
-montant_facture
-
-Relation :
-1 patient → N séjours
+- id_patient  
+- nom  
+- age  
+- genre  
+- groupe_sanguin  
 ```
+#### SEJOUR
+```
+- id_sejour  
+- id_patient  
+- date_admission  
+- date_sortie  
+- type_admission  
+- hopital  
+- medecin  
+- assureur  
+- pathologie  
+- medicament  
+- resultats_tests  
+- numero_chambre  
+- montant_facture  
+```
+#### Relation
+- 1 patient → N séjours
 
 ### 6.2 Modélisation MongoDB implémentée
 
