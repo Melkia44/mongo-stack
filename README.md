@@ -21,14 +21,17 @@ Docker
 Docker Compose
 
 ### 2.1 Installation rapide (Ubuntu)
+
+```
 sudo apt update
 sudo apt install -y docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
+```
 
 Se déconnecter / reconnecter pour appliquer les droits.
 
 ### 3. Arborescence du dépôt
-mongo-stack/
+```mongo-stack/
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
@@ -44,7 +47,7 @@ mongo-stack/
 │       └── healthcare_dataset.csv
 ├── backups/
 └── README.md
-
+```
 ###4. Déploiement local
 ###4.1 Configuration de l’environnement
 
@@ -84,7 +87,8 @@ Le dataset décrit des séjours médicaux.
 La structure retenue est optimisée pour MongoDB.
 
 ###6.1 Modèle conceptuel (référence)
-PATIENT
+
+```PATIENT
 
 id_patient
 nom
@@ -112,11 +116,13 @@ montant_facture
 
 Relation :
 1 patient → N séjours
+```
 
 ###6.2 Modélisation MongoDB implémentée
 
 La collection patients inclut un tableau admissions :
 
+```
 {
   "name": "Jane Doe",
   "age": 42,
@@ -139,7 +145,7 @@ La collection patients inclut un tableau admissions :
     }
   ]
 }
-
+```
 Avantages
 
 Lecture complète d’un dossier patient en une requête
@@ -153,24 +159,27 @@ L’authentification est gérée par MongoDB via le script initdb.d/001-init.js.
 
 ### 7.1 Utilisateurs créés automatiquement
 1. Administrateur global
-
+```
 User : ${MONGO_ROOT_USER}
 Rôle : root
 Usage : administration complète
-
+```
 2. Utilisateur applicatif (lecture/écriture)
+```
 User : ${APP_USER}
 Rôle : readWrite sur ${APP_DB}
-
+```
 3. Utilisateur lecture seule
+```
 User : ${APP_READ_USER}
 Rôle : read uniquement
-
-4. Administrateur applicatif
+```
+5. Administrateur applicatif
 User : ${APP_ADMIN_USER}
 Rôle : dbAdmin (statistiques, gestion index)
 
 ### 7.2 Script d’initialisation (001-init.js)
+```
 db.createUser({
   user: process.env.APP_USER,
   pwd: process.env.APP_PWD,
@@ -188,7 +197,7 @@ db.createUser({
   pwd: process.env.APP_ADMIN_PWD,
   roles: [{ role: "dbAdmin", db: process.env.APP_DB }]
 });
-
+```
 Principes appliqués
 
 Séparation stricte des privilèges
@@ -231,12 +240,14 @@ APP_ADMIN_USER=app_admin
 APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 
 ###11. Commandes utiles
+```
 docker compose up -d
 docker compose down
 docker compose logs -f mongo
 docker exec -it mongo mongosh
 docker compose run --rm ingest
 docker compose run --rm backup
+```
 
 ###12. Bonnes pratiques Git
 git add .
