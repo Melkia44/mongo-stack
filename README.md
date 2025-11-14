@@ -88,7 +88,8 @@ La structure retenue est optimisée pour MongoDB.
 
 ### 6.1 Modèle conceptuel (référence)
 
-```PATIENT
+```
+PATIENT
 
 id_patient
 nom
@@ -175,9 +176,11 @@ User : ${APP_READ_USER}
 Rôle : read uniquement
 ```
 5. Administrateur applicatif
+
+```
 User : ${APP_ADMIN_USER}
 Rôle : dbAdmin (statistiques, gestion index)
-
+```
 ### 7.2 Script d’initialisation (001-init.js)
 ```
 db.createUser({
@@ -222,7 +225,7 @@ Prévention de double-ingestion
 Génération mot de passe fort :
 openssl rand -base64 20
 
-###10. Exemple de .env.example
+### 10. Exemple de .env.example
 # Accès administrateur Mongo
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PWD=REPLACE_WITH_STRONG_PASSWORD
@@ -231,6 +234,7 @@ MONGO_ROOT_PWD=REPLACE_WITH_STRONG_PASSWORD
 ME_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
 
 # Utilisateurs applicatifs
+```
 APP_DB=healthcare
 APP_USER=app_user
 APP_PWD=REPLACE_WITH_STRONG_PASSWORD
@@ -238,7 +242,7 @@ APP_READ_USER=app_read
 APP_READ_PWD=REPLACE_WITH_STRONG_PASSWORD
 APP_ADMIN_USER=app_admin
 APP_ADMIN_PWD=REPLACE_WITH_STRONG_PASSWORD
-
+```
 ###11. Commandes utiles
 ```
 docker compose up -d
@@ -249,7 +253,7 @@ docker compose run --rm ingest
 docker compose run --rm backup
 ```
 
-###12. Bonnes pratiques Git
+### 12. Bonnes pratiques Git
 git add .
 git commit -m "feat: conteneurisation ingestion CSV"
 git push origin feature/docker-stack
@@ -259,7 +263,7 @@ Branches dédiées
 
 Pull Requests avant fusion dans main
 
-###13. Glossaire
+### 13. Glossaire
 Terme	Définition
 Conteneur	Instance isolée
 Volume Docker	Stockage persistant
@@ -267,7 +271,7 @@ Bind mount	Lien vers un dossier local
 Healthcheck	Vérification automatique
 Rebase Git	Réécriture linéaire de l’historique
 
-###14. Crédits
+### 14. Crédits
 
 © 2025 – Mathieu Lowagie
 Projet 5 – Master Data Engineering (OpenClassrooms)
