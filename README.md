@@ -62,7 +62,7 @@ nano .env
 ### 4.2 Lancement de la stack
 docker compose up -d
 
-###4.3 Vérification des conteneurs
+### 4.3 Vérification des conteneurs
 docker ps
 
 Services attendus :
@@ -71,7 +71,7 @@ Mongo_express
 mongo_backup
 ingest
 
-###4.4 Lancer manuellement l’ingestion
+### 4.4 Lancer manuellement l’ingestion
 docker compose run --rm ingest
 
 ### 5. Volumes et persistance
