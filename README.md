@@ -125,27 +125,23 @@ La collection patients inclut un tableau admissions :
 
 ```
 {
-  "name": "Jane Doe",
-  "age": 42,
-  "gender": "Female",
-  "blood_type": "A+",
-  "admissions": [
-    {
-      "admission_id": "ObjectId(...)",
-      "date_admission": "2024-01-31",
-      "date_discharge": "2024-02-02",
-      "admission_type": "Emergency",
-      "hospital": "General Hospital",
-      "doctor": "Dr Smith",
-      "insurance_provider": "HealthCare Inc",
-      "medical_condition": "Fracture",
-      "medication": "Paracetamol",
-      "test_results": "Normal",
-      "room_number": 102,
-      "billing_amount": 1450.90
-    }
-  ]
+  "Name": "Jane Doe",
+  "Age": 42,
+  "Gender": "Female",
+  "Blood Type": "A+",
+  "Date of Admission": "2024-01-31",
+  "Date of Discharge": "2024-02-02",
+  "Admission Type": "Emergency",
+  "Hospital": "General Hospital",
+  "Doctor": "Dr Smith",
+  "Insurance Provider": "HealthCare Inc",
+  "Medical Condition": "Fracture",
+  "Medication": "Paracetamol",
+  "Test Results": "Normal",
+  "Room Number": 102,
+  "Billing Amount": 1450.90
 }
+
 ```
 Avantages
 
@@ -179,7 +175,9 @@ Rôle : read uniquement
 
 ```
 User : ${APP_ADMIN_USER}
-Rôle : dbAdmin (statistiques, gestion index)
+Rôle : dbOwner + userAdmin
+Usage : gestion des index, statistiques, gestion des utilisateurs internes
+
 ```
 ### 7.2 Script d’initialisation (001-init.js)
 ```
@@ -213,10 +211,23 @@ Fonctionnement :
 Lecture du CSV avec Pandas
 Validation (quality())
 Transformations (transform.py)
+```
+Valide le schéma du CSV (colonnes attendues vs colonnes reçues).
+Convertit les types : dates, numériques, montants, entiers, etc.
+Nettoie les chaînes de caractères (trim, standardisation, case folding).
+Gère les valeurs incohérentes (âge invalide, numéros négatifs, dates impossibles).
+Applique des règles métier de validation (genres valides, groupes sanguins connus, montants ≥ 0).
+Supprime les lignes corrompues ou impossibles à corriger.
+Retourne un DataFrame propre, prêt à être converti en documents pour MongoDB.
+```
 Insertion dans MongoDB
 Création des index
+```
+Le pipeline réalise un **full refresh** à chaque exécution :
+- la collection `admissions` est supprimée
+- l’ensemble du dataset est réinjecté proprement
+```
 
-Prévention de double-ingestion
 
 ### 9. Sécurité
 .env jamais committé
